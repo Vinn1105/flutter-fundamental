@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pml/basic_widgets/teks_widget.dart';
 import 'package:pml/basic_widgets/image_widget.dart';
 import 'package:pml/basic_widgets/text_input.dart';
+import 'package:pml/pages/google_map_review.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,10 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      home: const GoogleMapReviewScreen(),
     );
   }
 }
@@ -33,36 +32,34 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  DateTime? _dateTime =DateTime.now();
+  DateTime? _dateTime = DateTime.now();
 
   // void _incrementCounter() {
   //   setState(() {
-     
+
   //    _counter++;
   //   });
   // }
-  
+
   void tampilkanDialog(BuildContext context) {
-  Widget okButton = TextButton(
-    child: Text("Ok"),
-    onPressed: () => Navigator.pop(context),
-  );
+    Widget okButton = TextButton(
+      child: Text("Ok"),
+      onPressed: () => Navigator.pop(context),
+    );
 
-  AlertDialog dialog = AlertDialog(
-    title: Text("Judul Dialog"),
-    content: Text("Ini isi dialog Alvin"),
-    actions: [okButton],
-  );
+    AlertDialog dialog = AlertDialog(
+      title: Text("Judul Dialog"),
+      content: Text("Ini isi dialog Alvin"),
+      actions: [okButton],
+    );
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return dialog;
-    },
-  );
-}
-
-
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return dialog;
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(_dateTime.toString()),
-           MyImageWidget(),
+            MyImageWidget(),
             MyWidget(),
             InputTextWidget(),
             ElevatedButton(
