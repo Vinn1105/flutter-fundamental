@@ -21,10 +21,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.teal,
           primary: Colors.teal.shade700,
         ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
       ),
       // Navigasi rute awal aplikasi
       initialRoute: '/',
