@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:pml/domain/barang.dart'; // Sesuaikan import model Barang Anda
+import 'package:pml/domain/barang.dart';
+import 'package:pml/widgets/item_card_widget.dart';
 
+/// Kompatibilitas untuk ItemBarangWidget yang mengarahkan ke ItemCardWidget.
 class ItemBarangWidget extends StatelessWidget {
   final Barang barang;
 
@@ -8,16 +10,6 @@ class ItemBarangWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, '/detail', arguments: barang);
-      },
-      child: Container(
-        color: Colors.tealAccent,
-        margin: EdgeInsets.symmetric(vertical: 3),
-        padding: EdgeInsets.all(5),
-        child: Text(barang.nama_barang),
-      ),
-    );
+    return ItemCardWidget(barang: barang);
   }
 }

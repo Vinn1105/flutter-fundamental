@@ -1,30 +1,58 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:pml/data/barang.dart';
 import 'package:pml/main.dart';
+import 'package:pml/widgets/footer_widget.dart';
+import 'package:pml/widgets/item_card_widget.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Memverifikasi halaman utama memuat ItemCardWidget dan FooterWidget', (WidgetTester tester) async {
+    // Bangun aplikasi dan jalankan 1 frame
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verifikasi judul aplikasi muncul di AppBar
+    expect(find.text('Katalog Belanja'), findsOneWidget);
+
+    // Verifikasi bahwa widget kartu produk (ItemCardWidget) muncul
+    expect(find.byType(ItemCardWidget), findsWidgets);
+
+    // Verifikasi bahwa FooterWidget ada dan menampilkan Nama serta NIM Alvin
+    expect(find.byType(FooterWidget), findsOneWidget);
+    expect(find.text('Alvin Kurnia Pratama'), findsOneWidget);
+    expect(find.text('NIM: 24.52.0006'), findsOneWidget);
+  });
+
+  testWidgets('Navigasi ke halaman detail dan verifikasi widget Hero serta data barang', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pump();
+
+    final firstBarang = listBarang.first;
+
+    // Ketuk item pertama
+    await tester.tap(find.text(firstBarang.nama));
+    await tester.pumpAndSettle(); // Tunggu animasi transisi Hero selesai
+
+    // Verifikasi halaman detail terbuka dengan judul AppBar 'Detail Produk'
+    expect(find.text('Detail Produk'), findsOneWidget);
+
+    // Verifikasi data barang ditampilkan di halaman detail
+    expect(find.text(firstBarang.nama), findsOneWidget);
+    expect(find.text(firstBarang.formattedHarga), findsOneWidget);
+    expect(find.textContaining(firstBarang.stok.toString()), findsWidgets);
+    expect(find.textContaining(firstBarang.rating.toString()), findsWidgets);
+
+    // Verifikasi keberadaan widget Hero pada halaman detail
+    final heroFinder = find.byWidgetPredicate(
+      (widget) => widget is Hero && widget.tag == 'barang-image-${firstBarang.id}',
+    );
+    expect(heroFinder, findsOneWidget);
+
+    // Navigasi kembali ke halaman utama
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    // Verifikasi kembali ke halaman utama
+    expect(find.text('Katalog Belanja'), findsOneWidget);
   });
 }
