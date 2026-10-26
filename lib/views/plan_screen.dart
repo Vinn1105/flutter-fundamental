@@ -1,10 +1,15 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 import '../models/data_layer.dart';
 import '../provider/plan_provider.dart';
 
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({super.key});
+  final Plan plan;
+
+  const PlanScreen({
+    super.key,
+    required this.plan,
+  });
 
   @override
   State<PlanScreen> createState() => _PlanScreenState();
@@ -12,6 +17,8 @@ class PlanScreen extends StatefulWidget {
 
 class _PlanScreenState extends State<PlanScreen> {
   late ScrollController scrollController;
+
+  Plan get plan => widget.plan;
 
   @override
   void initState() {
@@ -25,22 +32,38 @@ class _PlanScreenState extends State<PlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Master Plan Alvin')),
-      body: ValueListenableBuilder<Plan>(
-        valueListenable: PlanProvider.of(context),
-        builder: (context, plan, child) {
-          final totalTasks = plan.tasks.length;
-          final completedTasks = plan.completedCount;
+    final plansNotifier = PlanProvider.of(context);
 
-          final progress = totalTasks == 0 ? 0.0 : completedTasks / totalTasks;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(plan.name),
+      ),
+      body: ValueListenableBuilder<List<Plan>>(
+        valueListenable: plansNotifier,
+        builder: (context, plans, child) {
+          final planIndex =
+              plans.indexWhere((p) => p.name == plan.name);
+
+          if (planIndex == -1) {
+            return const Center(
+              child: Text('Rencana tidak ditemukan.'),
+            );
+          }
+
+          final currentPlan = plans[planIndex];
+          final totalTasks = currentPlan.tasks.length;
+          final completedTasks = currentPlan.completedCount;
+          final progress = totalTasks == 0
+              ? 0.0
+              : completedTasks / totalTasks;
 
           return Column(
             children: [
-              // Daftar tugas
-              Expanded(child: _buildList(plan)),
+              Expanded(
+                child: _buildList(currentPlan),
+              ),
 
-              // Panel progres
+              // Panel progres di bawah daftar tugas
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -59,24 +82,20 @@ class _PlanScreenState extends State<PlanScreen> {
                         color: Colors.black87,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
-                    // Bar progres ungu
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 12,
                         backgroundColor: Colors.purple.shade100,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(
                           Colors.purple,
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 4),
-
                     Text(
                       '${(progress * 100).round()}% selesai',
                       style: TextStyle(
@@ -91,85 +110,122 @@ class _PlanScreenState extends State<PlanScreen> {
           );
         },
       ),
-
       floatingActionButton: _buildAddTaskButton(context),
     );
   }
 
-  // Tombol untuk menambahkan tugas
   Widget _buildAddTaskButton(BuildContext context) {
-    final planNotifier = PlanProvider.of(context);
+    final plansNotifier = PlanProvider.of(context);
 
     return FloatingActionButton(
       onPressed: () {
-        final currentPlan = planNotifier.value;
+        final plans = plansNotifier.value;
+        final planIndex =
+            plans.indexWhere((p) => p.name == plan.name);
 
-        planNotifier.value = Plan(
+        if (planIndex == -1) return;
+
+        final currentPlan = plans[planIndex];
+        final updatedTasks =
+            List<Task>.from(currentPlan.tasks)
+              ..add(const Task());
+
+        final updatedPlans = List<Plan>.from(plans);
+        updatedPlans[planIndex] = Plan(
           name: currentPlan.name,
-          tasks: List<Task>.from(currentPlan.tasks)..add(const Task()),
+          tasks: updatedTasks,
         );
+
+        plansNotifier.value = updatedPlans;
       },
       child: const Icon(Icons.add),
     );
   }
 
-  // Tampilan setiap tugas
-  Widget _buildTaskTile(Task task, int index, BuildContext context) {
-    final planNotifier = PlanProvider.of(context);
+  Widget _buildTaskTile(
+    Task task,
+    int index,
+    BuildContext context,
+  ) {
+    final plansNotifier = PlanProvider.of(context);
 
     return ListTile(
       leading: Checkbox(
         value: task.complete,
         activeColor: Colors.purple,
         onChanged: (selected) {
-          final currentPlan = planNotifier.value;
+          final plans = plansNotifier.value;
+          final planIndex =
+              plans.indexWhere((p) => p.name == plan.name);
 
-          final updatedTasks = List<Task>.from(currentPlan.tasks);
+          if (planIndex == -1) return;
+
+          final currentPlan = plans[planIndex];
+          final updatedTasks =
+              List<Task>.from(currentPlan.tasks);
 
           updatedTasks[index] = Task(
             description: task.description,
             complete: selected ?? false,
           );
 
-          planNotifier.value = Plan(
+          final updatedPlans = List<Plan>.from(plans);
+          updatedPlans[planIndex] = Plan(
             name: currentPlan.name,
             tasks: updatedTasks,
           );
+
+          plansNotifier.value = updatedPlans;
         },
       ),
-
       title: TextFormField(
+        key: ValueKey('task-${plan.name}-$index'),
         initialValue: task.description,
-        decoration: const InputDecoration(hintText: 'Masukkan tugas'),
+        decoration: const InputDecoration(
+          hintText: 'Masukkan tugas',
+        ),
         onChanged: (text) {
-          final currentPlan = planNotifier.value;
+          final plans = plansNotifier.value;
+          final planIndex =
+              plans.indexWhere((p) => p.name == plan.name);
 
-          final updatedTasks = List<Task>.from(currentPlan.tasks);
+          if (planIndex == -1) return;
+
+          final currentPlan = plans[planIndex];
+          final updatedTasks =
+              List<Task>.from(currentPlan.tasks);
 
           updatedTasks[index] = Task(
             description: text,
             complete: task.complete,
           );
 
-          planNotifier.value = Plan(
+          final updatedPlans = List<Plan>.from(plans);
+          updatedPlans[planIndex] = Plan(
             name: currentPlan.name,
             tasks: updatedTasks,
           );
+
+          plansNotifier.value = updatedPlans;
         },
       ),
     );
   }
 
-  // Membuat daftar tugas
-  Widget _buildList(Plan plan) {
+  Widget _buildList(Plan currentPlan) {
     return ListView.builder(
       controller: scrollController,
-      keyboardDismissBehavior: Theme.of(context).platform == TargetPlatform.iOS
-          ? ScrollViewKeyboardDismissBehavior.onDrag
-          : ScrollViewKeyboardDismissBehavior.manual,
-      itemCount: plan.tasks.length,
+      keyboardDismissBehavior:
+          Theme.of(context).platform == TargetPlatform.iOS
+              ? ScrollViewKeyboardDismissBehavior.onDrag
+              : ScrollViewKeyboardDismissBehavior.manual,
+      itemCount: currentPlan.tasks.length,
       itemBuilder: (context, index) {
-        return _buildTaskTile(plan.tasks[index], index, context);
+        return _buildTaskTile(
+          currentPlan.tasks[index],
+          index,
+          context,
+        );
       },
     );
   }
