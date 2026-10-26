@@ -1,27 +1,29 @@
 
 import 'package:flutter/material.dart';
-import './models/data_layer.dart';
-import './provider/plan_provider.dart';
-import './views/plan_creator_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'pages/todo_page.dart';
 
 void main() {
-  runApp(const MasterPlanApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MasterPlanApp extends StatelessWidget {
-  const MasterPlanApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return PlanProvider(
-      notifier: ValueNotifier<List<Plan>>(const []),
-      child: MaterialApp(
-        title: 'State Management App',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-        ),
-        home: const PlanCreatorScreen(),
+    return MaterialApp(
+      title: 'Week 3 - ToDo',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorSchemeSeed: Colors.teal,
+        useMaterial3: true,
       ),
+      home: const TodoPage(),
     );
   }
 }
