@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "pizzaName": "Margherita",
+    "description": "Pizza klasik dengan saus tomat segar, keju mozzarella, dan daun kemangi",
+    "price": 8.75,
+    "imageUrl": "images/margherita.png"
+  },
+  {
+    "id": "2",
+    "pizzaName": "Marinara",
+    "description": "Pizza dengan tomat, bawang putih iris, oregano, dan minyak zaitun extra virgin",
+    "price": 7.50,
+    "imageUrl": "images/marinara.png"
+  },
+  {
+    "id": 3,
+    "pizzaName": "Quattro Formaggi",
+    "description": "Perpaduan empat jenis keju premium: mozzarella, gorgonzola, parmigiano, dan fontina",
+    "price": "11.25"
+  },
+  {
+    "id": 4,
+    "pizzaName": "Pepperoni Feast",
+    "description": "Melimpah irisan pepperoni sapi asap di atas lelehan keju mozzarella",
+    "price": 10.50,
+    "imageUrl": "images/pepperoni.png"
+  },
+  {
+    "id": "5",
+    "pizzaName": "Capricciosa",
+    "description": "Pizza dengan jamur kancing, artichoke, ham, dan buah zaitun hitam",
+    "price": 11.00,
+    "imageUrl": "images/capricciosa.png"
+  },
+  {
+    "id": 6,
+    "pizzaName": "Diavola",
+    "description": "Pizza pedas dengan salami pedas Italia, cabai rawit, dan keju mozzarella",
+    "price": "9.80",
+    "imageUrl": "images/diavola.png"
+  },
+  {
+    "id": 7,
+    "pizzaName": "Hawaiian Tropical",
+    "description": "Kombinasi manis dan gurih dari potongan nanas segar, daging asap, dan keju",
+    "price": 9.25
+  },
+  {
+    "id": 8,
+    "pizzaName": "BBQ Chicken",
+    "description": "Potongan ayam panggang saus barbekyu, bawang bombay merah, dan ketumbar",
+    "price": 10.75,
+    "imageUrl": "images/bbq_chicken.png"
+  },
+  {
+    "id": "9",
+    "pizzaName": "Veggie Supreme",
+    "description": "Paprika warna-warni, jamur, bawang bombay, jagung manis, dan zaitun",
+    "price": 8.90,
+    "imageUrl": "images/veggie.png"
+  },
+  {
+    "id": 10,
+    "pizzaName": "Truffle Mushroom",
+    "description": "Saus krim jamur truffle hitam dengan taburan keju parmesan dan peterseli",
+    "price": "13.50",
+    "imageUrl": "images/truffle.png"
+  }
+]
