@@ -1,8 +1,6 @@
-import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pml/model/pizza.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,65 +31,54 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // State untuk Praktikum 1 - 3 (JSON)
-  List<Pizza> myPizzas = [];
+  // State untuk Path Provider (Praktikum 5)
+  String documentsPath = '';
+  String tempPath = '';
 
-  // State untuk Praktikum 4 (SharedPreferences)
-  int appCounter = 0;
+  // State untuk Praktikum 6 (Menulis dan Membaca File teks)
+  final TextEditingController _controller = TextEditingController();
+  String fileContent = '';
 
   @override
   void initState() {
     super.initState();
-    // Membaca file JSON dari assets (Praktikum 1 - 3)
-    readJsonFile().then((value) {
-      setState(() {
-        myPizzas = value;
-      });
-    });
-
-    // Membaca dan menulis SharedPreferences (Praktikum 4)
-    readAndWritePreference();
+    getPaths();
+    readFile(); // Membaca file saat aplikasi dibuka
   }
 
-  // --- PRAKTIKUM 1, 2, 3: Membaca dan Konversi JSON ---
-  Future<List<Pizza>> readJsonFile() async {
-    String myString = await DefaultAssetBundle.of(context)
-        .loadString('assets/pizzalist.json');
-    List pizzaMapList = jsonDecode(myString);
-    List<Pizza> loadedPizzas = [];
-    for (var pizza in pizzaMapList) {
-      Pizza myPizza = Pizza.fromJson(pizza);
-      loadedPizzas.add(myPizza);
+  // --- PRAKTIKUM 5: PATH PROVIDER ---
+  Future<void> getPaths() async {
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    final tempDirectory = await getTemporaryDirectory();
+    setState(() {
+      documentsPath = documentsDirectory.path;
+      tempPath = tempDirectory.path;
+    });
+  }
+
+  // --- PRAKTIKUM 6: MENULIS DAN MEMBACA FILE ---
+  Future<File> get _localFile async {
+    final path = await documentsPath;
+    return File('$path/file_praktikum6.txt');
+  }
+
+  Future<File> writeFile(String text) async {
+    final file = await _localFile;
+    return file.writeAsString(text);
+  }
+
+  Future<void> readFile() async {
+    try {
+      final file = await _localFile;
+      if (await file.exists()) {
+        String contents = await file.readAsString();
+        setState(() {
+          fileContent = contents;
+        });
+      }
+    } catch (e) {
+      // Handle error jika file belum ada
     }
-
-    // Mengonversi kembali ke JSON String (tercetak di Debug Console)
-    String json = convertToJSON(loadedPizzas);
-    debugPrint('JSON Output: $json');
-
-    return loadedPizzas;
-  }
-
-  String convertToJSON(List<Pizza> pizzas) {
-    return jsonEncode(pizzas.map((pizza) => pizza.toJson()).toList());
-  }
-
-  // --- PRAKTIKUM 4: SHARED PREFERENCES ---
-  Future<void> readAndWritePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int counter = prefs.getInt('appCounter') ?? 0;
-    counter++;
-    await prefs.setInt('appCounter', counter);
-    setState(() {
-      appCounter = counter;
-    });
-  }
-
-  Future<void> deletePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    setState(() {
-      appCounter = 0;
-    });
   }
 
   @override
@@ -106,50 +93,65 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Bagian Tampilan Praktikum 4 (SharedPreferences Counter)
+            // --- BAGIAN PRAKTIKUM 5: PATH PROVIDER ---
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'You have opened the app $appCounter times.',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    const Text(
+                      'Path Provider (Praktikum 5)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: deletePreference,
-                      child: const Text('Reset counter'),
-                    ),
+                    Text('Doc Path:\n$documentsPath', style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 8),
+                    Text('Temp Path:\n$tempPath', style: const TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Bagian Tampilan Praktikum 1 - 3 (ListView Pizza)
-            const Text(
-              'Daftar Menu Pizza',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: myPizzas.length,
-              itemBuilder: (context, index) {
-                final pizza = myPizzas[index];
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${pizza.id}')),
-                    title: Text('${pizza.pizzaName} (\$${pizza.price})'),
-                    subtitle: Text(pizza.description),
-                  ),
-                );
-              },
+            // --- BAGIAN PRAKTIKUM 6: READ/WRITE FILE ---
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'File Storage (Praktikum 6)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Tulis sesuatu untuk disimpan',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        writeFile(_controller.text);
+                        readFile();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Data berhasil disimpan ke file!')),
+                        );
+                      },
+                      child: const Text('Simpan ke File'),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Isi file yang tersimpan:\n"$fileContent"',
+                      style: const TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
