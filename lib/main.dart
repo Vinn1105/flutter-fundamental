@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pml/http_helper.dart';
 import 'package:pml/model/pizza.dart';
+import 'package:pml/pages/form_pizza.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,11 +13,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Persistensi Data - Alvin',
-      debugShowCheckedModeBanner: false,
+      title: 'Pizza App - Alvin',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(),
     );
@@ -33,126 +30,173 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // State untuk Praktikum 1 - 3 (JSON)
-  List<Pizza> myPizzas = [];
-
-  // State untuk Praktikum 4 (SharedPreferences)
-  int appCounter = 0;
+  late Future<List<Pizza>> pizzaList;
 
   @override
   void initState() {
     super.initState();
-    // Membaca file JSON dari assets (Praktikum 1 - 3)
-    readJsonFile().then((value) {
+    pizzaList = HttpHelper().getPizzaList();
+  }
+
+  // Refresh daftar pizza
+  void refreshData() {
+    setState(() {
+      pizzaList = HttpHelper().getPizzaList();
+    });
+  }
+
+  // DELETE: Menghapus pizza
+  Future<void> deletePizza(Pizza pizza, List<Pizza> pizzas) async {
+    // Dialog konfirmasi sebelum menghapus
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Delete'),
+          content: Text(
+            'Apakah kamu yakin ingin menghapus ${pizza.pizzaName}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Jika batal, hentikan proses
+    if (confirm != true) return;
+
+    try {
+      // Memanggil API DELETE
+      final result = await HttpHelper().deletePizza(pizza);
+      debugPrint(result);
+
+      if (!mounted) return;
+
+      // Menghapus pizza dari tampilan lokal
       setState(() {
-        myPizzas = value;
+        pizzaList = Future.value(
+          pizzas.where((item) => item.id != pizza.id).toList(),
+        );
       });
-    });
 
-    // Membaca dan menulis SharedPreferences (Praktikum 4)
-    readAndWritePreference();
-  }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${pizza.pizzaName} berhasil dihapus!'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
 
-  // --- PRAKTIKUM 1, 2, 3: Membaca dan Konversi JSON ---
-  Future<List<Pizza>> readJsonFile() async {
-    String myString = await DefaultAssetBundle.of(context)
-        .loadString('assets/pizzalist.json');
-    List pizzaMapList = jsonDecode(myString);
-    List<Pizza> loadedPizzas = [];
-    for (var pizza in pizzaMapList) {
-      Pizza myPizza = Pizza.fromJson(pizza);
-      loadedPizzas.add(myPizza);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
-
-    // Mengonversi kembali ke JSON String (tercetak di Debug Console)
-    String json = convertToJSON(loadedPizzas);
-    debugPrint('JSON Output: $json');
-
-    return loadedPizzas;
-  }
-
-  String convertToJSON(List<Pizza> pizzas) {
-    return jsonEncode(pizzas.map((pizza) => pizza.toJson()).toList());
-  }
-
-  // --- PRAKTIKUM 4: SHARED PREFERENCES ---
-  Future<void> readAndWritePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int counter = prefs.getInt('appCounter') ?? 0;
-    counter++;
-    await prefs.setInt('appCounter', counter);
-    setState(() {
-      appCounter = counter;
-    });
-  }
-
-  Future<void> deletePreference() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    setState(() {
-      appCounter = 0;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Persistensi Data - Alvin'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Pizza List - Alvin'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Bagian Tampilan Praktikum 4 (SharedPreferences Counter)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    Text(
-                      'You have opened the app $appCounter times.',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+      body: FutureBuilder<List<Pizza>>(
+        future: pizzaList,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('Pizza tidak ditemukan'),
+            );
+          }
+
+          final pizzas = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: pizzas.length,
+            itemBuilder: (context, index) {
+              final pizza = pizzas[index];
+
+              return ListTile(
+                title: Text(pizza.pizzaName ?? ''),
+                subtitle: Text(pizza.description ?? ''),
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(pizza.imageUrl ?? ''),
+                ),
+
+                // Klik pizza untuk Edit (PUT)
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FormPizza(
+                        pizza: pizza,
+                        isNew: false,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: deletePreference,
-                      child: const Text('Reset counter'),
-                    ),
-                  ],
+                  );
+                },
+
+                // Tombol Delete
+                trailing: IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                  ),
+                  onPressed: () {
+                    deletePizza(pizza, pizzas);
+                  },
                 ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Tombol tambah pizza (POST)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FormPizza(
+                pizza: Pizza(),
+                isNew: true,
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Bagian Tampilan Praktikum 1 - 3 (ListView Pizza)
-            const Text(
-              'Daftar Menu Pizza',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: myPizzas.length,
-              itemBuilder: (context, index) {
-                final pizza = myPizzas[index];
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${pizza.id}')),
-                    title: Text('${pizza.pizzaName} (\$${pizza.price})'),
-                    subtitle: Text(pizza.description),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }

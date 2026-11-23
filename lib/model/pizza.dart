@@ -1,28 +1,32 @@
 class Pizza {
-  final int id;
-  final String pizzaName;
-  final String description;
-  final double price;
-  final String imageUrl;
+  int? id;
+  String? pizzaName;
+  String? description;
+  double? price;
+  String? imageUrl;
+  String? size; // Field baru: ukuran pizza
 
+  // Constructor Pizza
   Pizza({
-    required this.id,
-    required this.pizzaName,
-    required this.description,
-    required this.price,
-    required this.imageUrl,
+    this.id,
+    this.pizzaName,
+    this.description,
+    this.price,
+    this.imageUrl,
+    this.size,
   });
 
-  factory Pizza.fromJson(Map<String, dynamic> json) {
-    return Pizza(
-      id: int.tryParse(json['id'].toString()) ?? 0,
-      pizzaName: json['pizzaName'] ?? '',
-      description: json['description'] ?? '',
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
-      imageUrl: json['imageUrl'] ?? '',
-    );
+  // Mengubah JSON menjadi objek Pizza
+  Pizza.fromJson(Map<String, dynamic> json) {
+    id = int.tryParse(json['id'].toString());
+    pizzaName = json['pizzaName'];
+    description = json['description'];
+    price = double.tryParse(json['price'].toString());
+    imageUrl = json['imageUrl'];
+    size = json['size'];
   }
 
+  // Mengubah objek Pizza menjadi JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -30,6 +34,7 @@ class Pizza {
       'description': description,
       'price': price,
       'imageUrl': imageUrl,
+      'size': size, // Field size ikut dikirim ke JSON
     };
   }
 }
